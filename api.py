@@ -6,8 +6,7 @@ from stable_baselines3 import PPO
 from gymnasium.envs.registration import register
 import gymnasium as gym
 from fastapi.middleware.cors import CORSMiddleware
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import torch, random
+import random
 import google.generativeai as genai
 
 register(
@@ -71,47 +70,6 @@ async def predict_action(state: State):
     action, _ = advanceModel.predict(state_array, deterministic=False)
     
     return {"action": int(action)}
-
-model_test = GPT2LMHeadModel.from_pretrained("gpt2-finetuned-final")
-tokenizer_test = GPT2Tokenizer.from_pretrained("gpt2-finetuned-final")
-tokenizer_test.pad_token = tokenizer_test.eos_token
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_test.to(device)
-model_test.eval()
-
-riddle_pool = []
-
-def generate_riddle():
-    prompt = f"Generate Question and Answer based on this Category: Capitals"
-    input_ids = tokenizer_test.encode(prompt, return_tensors="pt").to(device)
-    attention_mask = torch.ones_like(input_ids)
-    
-    output = model_test.generate(
-        input_ids=input_ids,
-        attention_mask=attention_mask,
-        max_length=250,
-        temperature=0.7,
-        num_return_sequences=1,
-        top_p=0.9,
-        do_sample=True,
-        pad_token_id=tokenizer_test.eos_token_id
-    )
-    
-    generated_text = tokenizer_test.decode(output[0], skip_special_tokens=True)
-    
-    try:
-        parts = generated_text.split("|")
-        question_part = next(part for part in parts if "Question:" in part).strip()
-        answer_part = next(part for part in parts if "Answer:" in part).strip()
-
-        question = question_part.replace("Question:", "").strip()
-        answer = answer_part.replace("Answer:", "").strip()
-    except (ValueError, StopIteration):
-        question = "What is the capital of Pakistan"
-        answer = "Islamabad"
-    
-    return {"question": question, "answer": answer}
 
 
 def generate_trivia():
