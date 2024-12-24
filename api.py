@@ -71,6 +71,7 @@ async def predict_action(state: State):
     
     return {"action": int(action)}
 
+riddle_pool = []
 
 def generate_trivia():
     genai.configure(api_key="AIzaSyB0VfYJvPfVYSZWFxb37ZXno-ccDcXxpBY")
